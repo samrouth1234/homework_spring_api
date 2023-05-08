@@ -1,5 +1,4 @@
 package ios.istad.mbanking.api.user;
-import com.github.pagehelper.ISelect;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import ios.istad.mbanking.api.user.webs.CreateUserDto;
@@ -26,7 +25,13 @@ public class UserServiceImpl implements UserService{
         log.info("User ={}",user.getId());
         return this.findUserById(user.getId());
     }
-
+    // findAllUsers
+    @Override
+    public PageInfo<UserDto> findAllUsers(int page, int limit,String name) {
+        PageInfo<User> userPageInfo=PageHelper.startPage(page,limit)
+                .doSelectPageInfo(()->usersMapper.select(name));
+        return userMapStruct.userPageInfoTouserDtoPageInfo(userPageInfo);
+    }
     // select element to database
     @Override
     public UserDto findUserById(Integer id) {
@@ -39,9 +44,6 @@ public class UserServiceImpl implements UserService{
     // delete element to database
     @Override
     public Integer deleteUserById(Integer id) {
-    //        boolean isFound =usersMapper.existsById(id);
-    //        System.out.println(isFound);
-    //        return id;
         boolean isFound =usersMapper.existsById(id);
         if(isFound){
             // delete by id
@@ -62,21 +64,21 @@ public class UserServiceImpl implements UserService{
                 ,String.format("User with %d id not found",id));
     }
     @Override
-    public PageInfo<UserDto> findAllUsers(int page, int limit) {
-        PageInfo<User> userPageInfo=PageHelper.startPage(page,limit)
-                .doSelectPageInfo(usersMapper::select);
-        return userMapStruct.userPageInfoTouserDtoPageInfo(userPageInfo);
-    }
-
-    @Override
     public UserDto updateUserById(Integer id, UpdateUserDto updateUserDTo) {
         if(usersMapper.existsById(id)){
             User user =userMapStruct.updateUserDtoToUser(updateUserDTo);
+            user.setId(id);
             usersMapper.updateById(user);
             return this.findUserById(id);
         }
         throw new ResponseStatusException(HttpStatus.NOT_FOUND,
                 String.format("User with %d id not found",id));
     }
-
+    @Override
+    public UserDto findUserByStudentCardId(String studentCardId) {
+        User user = usersMapper.selectByStudentCardId(studentCardId).orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        String.format("User with %s is not found", studentCardId)));
+        return userMapStruct.userToUserDto(user);
+    }
 }

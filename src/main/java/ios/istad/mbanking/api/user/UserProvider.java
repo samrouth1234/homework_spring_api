@@ -40,16 +40,24 @@ public class UserProvider {
         return new SQL(){{
             SELECT("*");
             FROM(tebleName);
-            WHERE("is_deleted = FALSE ");
+            WHERE("name ilike '%' || #{name} ||'%' ","is_deleted = FALSE ");
             ORDER_BY("id DESC");
         }}.toString();
     }
     public String buildUpdateIsByIdSql(){
         return new SQL(){{
+            UPDATE(tebleName);
+            SET("name = #{u.name}");
+            SET("gender = #{u.gender}");
+            WHERE("id = #{u.id}");
+        }}.toString();
+    }
+
+    public String buildSelectByStudentCardIdSql() {
+        return new SQL() {{
             SELECT("*");
-            SET("name={u.name}");
-            SET("gender={u.gender}");
-            WHERE("id={u.id}");
+            FROM(tebleName);
+            WHERE("student_card_id = #{studentCardId}", "is_deleted = FALSE");
         }}.toString();
     }
 }

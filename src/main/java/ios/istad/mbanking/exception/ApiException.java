@@ -15,6 +15,17 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class ApiException {
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    @ExceptionHandler(NoSuchFieldException.class)
+    public BaseError<?> handleNoSuchFieldException(ResponseStatusException e){
+        return BaseError.builder()
+                .status(false)
+                .code(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                .timestamp(LocalDateTime.now())
+                .message("Something went wrong ..!please check")
+                .error(e.getReason())
+                .build();
+    }
     // Error 404 =(Error Service 0r Sever)
     // Capture all errors
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -28,12 +39,10 @@ public class ApiException {
                 .error(e.getReason())
                 .build();
     }
-
     // Error 400
     // Error User Not Enter following rule
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(MethodArgumentNotValidException.class)
-
     public BaseError<?> handleValidationException(MethodArgumentNotValidException e){
         List<Map<String ,String>>errors=new ArrayList<>();
         for(FieldError error : e.getFieldErrors()){

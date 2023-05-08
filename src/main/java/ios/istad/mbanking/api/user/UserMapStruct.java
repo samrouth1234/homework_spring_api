@@ -9,7 +9,6 @@ public interface UserMapStruct {
     User createUserDtoToUser(CreateUserDto createUserDto);
     UserDto userToUserDto(User user);
     User userDtoToUser(UserDto userDto);
-
     User updateUserDtoToUser(UpdateUserDto updateUserDTo);
     PageInfo <UserDto> userPageInfoTouserDtoPageInfo (PageInfo <User> userPageInfo);
 

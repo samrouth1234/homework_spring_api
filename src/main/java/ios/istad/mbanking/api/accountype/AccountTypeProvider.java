@@ -21,8 +21,20 @@ public class AccountTypeProvider {
     public String buildInsertSql(){
         return new  SQL(){{
             INSERT_INTO("account_types");
-            VALUES("id","#{u.id}");
             VALUES("name","#{u.name}");
+        }}.toString();
+    }
+    public String buildUpdateSql(){
+        return new SQL(){{
+            UPDATE("account_types");
+            SET("name=#{u.name}");
+            WHERE("id=#{u.id}");
+        }}.toString();
+    }
+    public String buildDeleteIsByIdSql(){
+        return new SQL(){{
+            DELETE_FROM("account_types");
+            WHERE("id=#{u.id}");
         }}.toString();
     }
 }

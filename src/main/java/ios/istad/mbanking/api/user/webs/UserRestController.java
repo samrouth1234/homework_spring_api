@@ -26,13 +26,13 @@ public class UserRestController {
         return BaseRest.builder()
                 .status(true)
                 .code(HttpStatus.OK.value())
-                .message("User has been deleted successfully!")
+                .message("User has been Update successfully!")
                 .timestamp(LocalDateTime.now())
                 .data(userDto)
                 .build();
     }
 
-    @PutMapping("/{id}/update-is-deleted-status")
+    @PutMapping("/{id}/is-deleted")
     public BaseRest<?> updateIsDeleteStatus(@PathVariable Integer id ,@RequestBody isDeletedDto dto ){  //PathVariable unine
         Integer deleteId =userService.updateIsDeleteStatus(id ,dto.status());
         return BaseRest.builder()
@@ -45,7 +45,7 @@ public class UserRestController {
     }
 
     @DeleteMapping("/{id}")
-    public BaseRest<?> deleteUserById(@PathVariable Integer id){//PathVariable unine
+    public BaseRest<?> deleteUserById(@PathVariable Integer id){
         Integer deleteID =userService.deleteUserById(id);
         return BaseRest.builder()
                 .status(true)
@@ -56,21 +56,32 @@ public class UserRestController {
                 .build();
     }
 
-    @GetMapping("/{id}")
-    public BaseRest<?> findUserById(@PathVariable Integer id){
-        UserDto userDto=userService.findUserById(id);
+    @GetMapping("/{identifier}")
+    public BaseRest<?> findUserById(@PathVariable("identifier") String identifier) {
+
+        UserDto userDto;
+
+        try {
+            Integer id = Integer.parseInt(identifier);
+            userDto = userService.findUserById(id);
+        } catch (NumberFormatException e) {
+            userDto = userService.findUserByStudentCardId(identifier);
+        }
+
         return BaseRest.builder()
                 .status(true)
                 .code(HttpStatus.OK.value())
-                .message("User has been create successfully!")
+                .message("User has been found successfully.")
                 .timestamp(LocalDateTime.now())
                 .data(userDto)
                 .build();
     }
+
     @GetMapping
     public BaseRest<?>findAllUser(@RequestParam(name="page",required = false,defaultValue = "1")int page,
-                                  @RequestParam(value = "limit",required = false,defaultValue = "20")int limit){
-        PageInfo<UserDto> userPageInfo =userService.findAllUsers(page,limit);
+                                  @RequestParam(value = "limit",required = false,defaultValue = "20")int limit,
+                                  @RequestParam(value = "name",required = false,defaultValue = "")String name){
+        PageInfo<UserDto> userPageInfo =userService.findAllUsers(page,limit,name);
         return BaseRest.builder()
                 .status(true)
                 .code(HttpStatus.OK.value())

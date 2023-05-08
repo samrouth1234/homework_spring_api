@@ -1,8 +1,8 @@
 package ios.istad.mbanking.api.accountype;
 
 import ios.istad.mbanking.api.accountype.AccDto.AccountTypeDto;
-import ios.istad.mbanking.api.accountype.AccDto.CreateAccountDto;
 import ios.istad.mbanking.api.user.User;
+import ios.istad.mbanking.api.user.webs.UpdateUserDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -19,25 +19,30 @@ public class AccountTypeServiceImpl implements AccountTypeService{
     @Override
     public List<AccountTypeDto> findAllAccount() {
         List<AccountType>accountTypes=accountTypeMapper.select();
-        List<AccountTypeDto> accountTypeDtoList = accountTypes.stream()
-                .map(accountType -> new AccountTypeDto(accountType.getName()))
-                .toList();
-        return accountTypeDtoList;
+        return accountTypeMapStruct.toDtoList(accountTypes);
     }
 
-    public AccountTypeDto createNewAccount(CreateAccountDto createAccountDto) {
-        AccountType accountTypes = accountTypeMapStruct .accountToAccountDto(createAccountDto);
-        accountTypeMapper.insert(accountTypes);
-        log.info("User ={}",accountTypes.getId());
-        return this.findAccountById(accountTypes.getId());
+    @Override
+    public AccountTypeDto createNewAccount(AccountTypeDto accountTypeDto) {
+        AccountType accountType=accountTypeMapStruct.formAccountTypeDto(accountTypeDto);
+        accountTypeMapper.insert(accountType);
+        return accountTypeMapStruct.toAccountTypeDto(accountType);
     }
 
     @Override
     public AccountTypeDto findAccountById(Integer id) {
         AccountType accountType = accountTypeMapper.selectById(id).orElseThrow(()->
                 new ResponseStatusException(HttpStatus.NOT_FOUND
-                        ,String.format("User with %d id not found",id)));
-        return accountTypeMapStruct.accountToAccountDto(accountType);
+                        ,String.format("Account type  with %d id not found",id)));
+        return accountTypeMapStruct.toAccountTypeDto(accountType);
+    }
+
+    @Override
+    public AccountTypeDto updateAccountById(Integer id, AccountTypeDto accountTypeDto) {
+        AccountType accountType = accountTypeMapStruct.formAccountTypeDto(accountTypeDto);
+        accountType.setId(id);
+        accountTypeMapper.update(accountType);
+        return accountTypeMapStruct.toAccountTypeDto(accountType) ;
     }
 
     @Override
@@ -45,12 +50,10 @@ public class AccountTypeServiceImpl implements AccountTypeService{
         boolean isFound =accountTypeMapper.existsById(id);
         if(isFound){
             // delete by id
-            accountTypeMapper.existsById(id);
+            accountTypeMapper.deleteById(id);
             return id;
         }
         throw new ResponseStatusException(HttpStatus.NOT_FOUND
                 ,String.format("User with %d id not found",id));
     }
-
-
 }

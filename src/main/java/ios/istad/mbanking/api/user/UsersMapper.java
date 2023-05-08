@@ -16,19 +16,23 @@ public interface UsersMapper {
 
     // selectProvider byID
     @SelectProvider(type = UserProvider.class,method = "buildSelectByIdSql")
-    // used ban te select
     @Results(id = "userResultMap",value = {
             @Result(column = "student_card_id",property ="studentCardId" ),
             @Result(column = "is_student",property = "isStudent")
     })
     Optional <User> selectById (@Param("id") Integer id);
 
+    @SelectProvider(type = UserProvider.class, method = "buildSelectByStudentCardIdSql")
+    @ResultMap("userResultMap")
+    Optional<User> selectByStudentCardId(@Param("studentCardId") String studentCardId);
+
     @SelectProvider (type = UserProvider.class,method = "buildSelectSql")
     @ResultMap("userResultMap")
-    List<User>select();
+    List<User>select(@Param("name") String name);
 
     @Select("Select Exists (select * from users where id=#{id})")
     boolean existsById(@Param("id")Integer id);
+
     // delete element in database  userBYid
     @DeleteProvider(type = UserProvider.class,method = "buildDeleteById")
     void deleteById(@Param("id")Integer id);
@@ -40,5 +44,6 @@ public interface UsersMapper {
 
     @UpdateProvider(type = UserProvider.class,method = "buildUpdateIsByIdSql")
     void updateById(@Param("u")User user);
+
 
 }

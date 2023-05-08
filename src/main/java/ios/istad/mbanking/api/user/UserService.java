@@ -6,12 +6,17 @@ import ios.istad.mbanking.api.user.webs.UserDto;
 
 public interface UserService {
     UserDto createNewUser(CreateUserDto createUserDto);
+
     UserDto findUserById(Integer id);
 
+    PageInfo<UserDto>findAllUsers(int page,int limit,String name);
+
     Integer deleteUserById(Integer id);
+
     Integer updateIsDeleteStatus(Integer id ,boolean status);
 
-    PageInfo<UserDto>findAllUsers(int page,int limit);
-
     UserDto updateUserById(Integer id, UpdateUserDto updateUserDTo);
+
+    UserDto findUserByStudentCardId(String studentCardId);
+
 }
