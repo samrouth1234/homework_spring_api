@@ -1,8 +1,10 @@
 package ios.istad.mbanking.api.file;
-import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.core.io.UrlResource;
+
+import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
+
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.List;
 
 public interface FileService {
@@ -20,12 +22,25 @@ public interface FileService {
      */
     List<FileDto> uploadMultiple(List<MultipartFile>files);
 
-/**
- * used deleted  file
- * @param filename request from data from client
- * @return fileDto
- */
-    FileDto deletedFileByName (String filename );
+    /**
+     * find by name
+     * @param name request from data from client
+     * @return fileDto
+     */
+
+    FileDto findByName(String name) throws IOException;
+
+
+    /**
+     * used deleted by name
+     * @param name
+     * fileDto
+     */
+    void deleteByName( String name);
+
+
+    List <FileDto> deletedAllFile();
+
 
     /**
      * used findAllFile
@@ -33,23 +48,15 @@ public interface FileService {
      * fileDto
      */
 
-    List<FileDto>findAllFile();
-
-    /**
-     * used deleted All files
-     * request from data from client
-     * fileDto
-     */
-    boolean deletedAllFiles();
+    List<FileDto>findAllFile() throws MalformedURLException;
 
     /**
      * used downLoadFile
-     *
-     * @param filename
-     * @param filename request from data from client
+     * @param name
+     * @param name request from data from client
      * @return fileDto
      */
 
-    FileDto downloadFileName(String filename);
+    Resource downloadFileName(String name);
 
 }
