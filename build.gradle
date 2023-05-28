@@ -19,18 +19,39 @@ repositories {
 }
 
 dependencies {
-    // user my input navigation
-    implementation 'com.github.pagehelper:pagehelper-spring-boot-starter:1.4.6'
+    // OAuth2 Resource Server (JWT)
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+    // Password Validator
+    implementation 'org.passay:passay:1.6.3'
+    // Spring Boot Starter Web dependency
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    // MyBatis
+    implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.0'
     //
+    developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    // Postgresql
+    implementation 'org.postgresql:postgresql'
+    // Spring Boot Starter we used in Gradle build tool
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    implementation group: 'org.springdoc', name: 'springdoc-openapi-starter-webmvc-ui', version: '2.1.0'
+    // config mapstruct
+    annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
     implementation 'org.mapstruct:mapstruct:1.5.5.Final'
     annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
-    compileOnly 'org.projectlombok:lombok'
+    // Lombok library
     annotationProcessor 'org.projectlombok:lombok'
+    // Lombok
+    compileOnly 'org.projectlombok:lombok'
+    // starter validation
     implementation 'org.springframework.boot:spring-boot-starter-validation'
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.0'
-    runtimeOnly 'org.postgresql:postgresql'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    // pagination
+    implementation 'com.github.pagehelper:pagehelper-spring-boot-starter:1.4.6'
+    // Thymeleaf Engine
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+    // Security
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    //Main
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
 }
 
 tasks.named('test') {

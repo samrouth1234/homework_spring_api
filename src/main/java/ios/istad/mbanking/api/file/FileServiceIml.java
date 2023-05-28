@@ -13,11 +13,8 @@ import java.util.List;
 @Slf4j
 @Service
 public class FileServiceIml implements FileService{
-    @Value("${file.server-path}")
-    private String fileServerPath;
-
-    @Value("${file.base-url}")
-    private String fileBaseUrl;
+    @Value("file.download-url")
+    private String fileDownload;
     private FileUtil fileUtil;
 
 
@@ -45,36 +42,13 @@ public class FileServiceIml implements FileService{
                 .name(resource.getFilename())
                 .extension(fileUtil.getExtension(resource.getFilename()))
                 .url(String.format("%s%s",fileUtil.getFileBaseUrl(),resource.getFilename()))
+                .downloadUrl(String.format("%s%s",fileDownload ,name))
                 .size(resource.contentLength())
                 .build();
     }
-
     @Override
     public void deleteByName(String name) {
         fileUtil.deleteByName(name);
-    }
-
-    @Override
-    public List<FileDto> deletedAllFile() {
-        return null;
-    }
-    @Override
-    public List<FileDto> findAllFile() {
-        List<FileDto> fileDtoList = new ArrayList<>();
-        File folder = new File(fileUtil.getFileServerPath());
-        File[] listOfFiles = folder.listFiles();
-        assert listOfFiles != null;
-        for (File file : listOfFiles) {
-            if (file.isFile()) {
-                String name = file.getName();
-                String url = fileUtil.getFileBaseUrl() + name;
-                long size = file.length();
-                String downloadUrl =downloadFileName(name) + name;
-                int lastDotIndex = name.lastIndexOf(".");
-                String extension = name.substring(lastDotIndex + 1);
-            }
-        }
-        return fileDtoList;
     }
 
     @Override

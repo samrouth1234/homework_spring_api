@@ -28,7 +28,6 @@ public class AccountTypeServiceImpl implements AccountTypeService{
         accountTypeMapper.insert(accountType);
         return accountTypeMapStruct.toAccountTypeDto(accountType);
     }
-
     @Override
     public AccountTypeDto findAccountById(Integer id) {
         AccountType accountType = accountTypeMapper.selectById(id).orElseThrow(()->

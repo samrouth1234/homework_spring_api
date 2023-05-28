@@ -1,9 +1,11 @@
 package ios.istad.mbanking.util;
 
 import ios.istad.mbanking.api.file.FileDto;
+import lombok.Data;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
@@ -15,16 +17,23 @@ import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Component
 @Getter
+@Data
 public class FileUtil {
     @Value("${file.server-path}")
     private String fileServerPath;
 
     @Value("${file.base-url}")
     private String fileBaseUrl;
+
+    @Value("file.download-url")
+    private String fileDownload;
+
     public FileDto upload (MultipartFile file){
         String extension =getExtension(file.getOriginalFilename());
         long size = file.getSize();
@@ -37,6 +46,7 @@ public class FileUtil {
                     .name(fileName)
                     .url(url)
                     .extension(extension)
+                    .downloadUrl(String.format("%s%s",fileDownload ,fileName))
                     .size(size)
                     .build();
         } catch (IOException e) {
@@ -64,16 +74,6 @@ public class FileUtil {
                     ,e.getMessage());
         }
     }
-
-    public void fileAllFile(FileDto fileDto){
-        Path path = Paths .get(fileServerPath + fileDto);
-        try {
-            Resource resource =new UrlResource(path.toUri());
-        } catch (MalformedURLException e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR
-                    ,e.getMessage());
-        }
-    }
     public void deleteByName(String name){
         Path path = Paths .get(fileServerPath +name);
         try {
@@ -87,6 +87,4 @@ public class FileUtil {
                     ,"File is Failed to deleted");
         }
     }
-
-
 }

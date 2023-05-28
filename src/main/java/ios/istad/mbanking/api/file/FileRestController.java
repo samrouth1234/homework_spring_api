@@ -58,17 +58,6 @@ public class FileRestController {
         fileService.deleteByName(name);
     }
 
-    @GetMapping
-    public BaseRest<?> findAllFile() {
-        List<FileDto> resultFiles = fileService.findAllFile();
-        return BaseRest.builder()
-                .status(true)
-                .code(HttpStatus.OK.value())
-                .message("File has been finAll successfully")
-                .timestamp(LocalDateTime.now())
-                .data(resultFiles)
-                .build();
-    }
     @GetMapping("/download/{name}")
     public ResponseEntity<?> downloadFileName(@PathVariable String name){
         Resource resource = fileService.downloadFileName(name);

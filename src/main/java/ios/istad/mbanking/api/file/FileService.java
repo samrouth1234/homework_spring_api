@@ -39,16 +39,12 @@ public interface FileService {
     void deleteByName( String name);
 
 
-    List <FileDto> deletedAllFile();
-
-
     /**
      * used findAllFile
      * @return request from data from client
      * fileDto
      */
 
-    List<FileDto>findAllFile() throws MalformedURLException;
 
     /**
      * used downLoadFile

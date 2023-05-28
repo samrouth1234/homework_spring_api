@@ -5,6 +5,7 @@ import ios.istad.mbanking.api.accountype.AccDto.AccountTypeDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -16,6 +17,7 @@ public class AccountTypeRestController {
     private final AccountTypeService accountTypeService;
     // find All element
     @GetMapping
+    @PreAuthorize("hasAuthority('SCOPE_account:read')")
     public BaseRest<?>findAll(){
         var accountTypeDtoList = accountTypeService.findAllAccount();
         return BaseRest.builder()
@@ -28,6 +30,7 @@ public class AccountTypeRestController {
     }
     // find by id
     @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('SCOPE_account:read')")
     public BaseRest<?> findUserById(@PathVariable Integer id){
         var accountTypeDto =accountTypeService.findAccountById(id);
         return BaseRest.builder()
@@ -39,6 +42,7 @@ public class AccountTypeRestController {
                 .build();
     }
     @PostMapping
+    @PreAuthorize("hasAuthority('SCOPE_account:write')")
     public BaseRest<?>createNewAccount( @Valid @RequestBody  AccountTypeDto body){
         AccountTypeDto accountTypeDto=accountTypeService.createNewAccount(body);
         return BaseRest.builder()
@@ -50,6 +54,7 @@ public class AccountTypeRestController {
                 .build();
     }
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('SCOPE_account:update')")
     public BaseRest<?> updateAccountTypeById ( @PathVariable Integer id, @Valid  @RequestBody  AccountTypeDto body){
         AccountTypeDto accountTypeDto=accountTypeService.updateAccountById(id,body);
         return BaseRest.builder()

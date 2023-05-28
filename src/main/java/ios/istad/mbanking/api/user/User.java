@@ -3,6 +3,7 @@ package ios.istad.mbanking.api.user;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import java.util.List;
 
 @Getter
 @Setter
@@ -15,4 +16,14 @@ public class User {
     private String studentCardId;
     private Boolean isStudent;
     private Boolean isDeleted;
+
+    // Auth feature info
+    private String email;
+    private String password;
+    private Boolean isVerified;
+    private String verifiedCode;
+
+    // Users has roles
+    private List <Role>roles;
+
 }

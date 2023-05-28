@@ -14,7 +14,7 @@ public interface UsersMapper {
     @Options(useGeneratedKeys = true, keyColumn = "id", keyProperty = "id")
     void insert(@Param("u") User user);
 
-    // selectProvider byID
+    // selectProvider byId
     @SelectProvider(type = UserProvider.class,method = "buildSelectByIdSql")
     @Results(id = "userResultMap",value = {
             @Result(column = "student_card_id",property ="studentCardId" ),
@@ -45,5 +45,16 @@ public interface UsersMapper {
     @UpdateProvider(type = UserProvider.class,method = "buildUpdateIsByIdSql")
     void updateById(@Param("u")User user);
 
+    // validator email in table
+
+    @Select("SELECT EXISTS (SELECT * FROM users WHERE email=#{email})")
+    boolean existsByEmail(@Param("email")String email);
+
+    // validator Role in table
+
+    @Select("SELECT EXISTS (SELECT * FROM roles WHERE id=#{rolesId})")
+    boolean checkRoleId(Integer roleId);
+
+    //
 
 }

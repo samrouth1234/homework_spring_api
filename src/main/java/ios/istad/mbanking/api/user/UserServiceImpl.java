@@ -20,9 +20,9 @@ public class UserServiceImpl implements UserService{
     // insert element to database
     @Override
     public UserDto createNewUser(CreateUserDto createUserDto) {
-        User user= userMapStruct.createUserDtoToUser(createUserDto);
+        User user = userMapStruct.createUserDtoToUser(createUserDto);
         usersMapper.insert(user);
-        log.info("User ={}",user.getId());
+        log.info("user + {}",user.getId());
         return this.findUserById(user.getId());
     }
     // findAllUsers

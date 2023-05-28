@@ -19,7 +19,7 @@ public class UserProvider {
         return new SQL(){{
             SELECT("*");
             FROM(tebleName);
-            WHERE("id = #{id}","is_deleted = TRUE ");
+            WHERE("id = #{id}");
         }}.toString();
     }
 
@@ -38,6 +38,7 @@ public class UserProvider {
     }
     public String buildSelectSql(){
         return new SQL(){{
+
             SELECT("*");
             FROM(tebleName);
             WHERE("name ilike '%' || #{name} ||'%' ","is_deleted = FALSE ");
