@@ -30,8 +30,10 @@ public class UserDetailsServiceIml implements UserDetailsService {
                 System.out.println(authority.getName());
             }
         }
+
         CustomUserDetails customUserDetails =new CustomUserDetails();
         customUserDetails.setUser(user);
+
         log.info("Custom User Details :{}",customUserDetails);
         log.info("Custom User Details :{}",customUserDetails.getAuthorities());
         return customUserDetails;

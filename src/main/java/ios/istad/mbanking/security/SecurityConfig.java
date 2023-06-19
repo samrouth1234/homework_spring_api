@@ -8,23 +8,27 @@ import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import ios.istad.mbanking.util.KeyUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationProvider;
 import org.springframework.security.web.SecurityFilterChain;
-
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
@@ -41,6 +45,8 @@ public class SecurityConfig {
     private final UserDetailsServiceIml userDetailsService;
 
     private final  CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+
+    private final KeyUtil keyUtil;
 
 
     // Define in-memory user
@@ -75,43 +81,57 @@ public class SecurityConfig {
         auth.setPasswordEncoder(encoder);
         return auth;
     }
+    @Bean (name = "jwtRefreshTokenAuthProvider")
+    public JwtAuthenticationProvider jwtAuthenticationProvider() throws NoSuchAlgorithmException, JOSEException {
+
+        JwtAuthenticationProvider provider = new JwtAuthenticationProvider(jwtRefreshTokeDecoder());
+        provider.setJwtAuthenticationConverter(jwtAuthenticationConverter());
+
+        return provider;
+    }
+
+
+    @Bean
+    public JwtAuthenticationConverter jwtAuthenticationConverter(){
+        //JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
+        return new JwtAuthenticationConverter();
+    }
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         // disable csrf
-        http.csrf(AbstractHttpConfigurer::disable).httpBasic();
-
+        http.csrf(AbstractHttpConfigurer::disable);
         //Authorize URL mapping
         http.authorizeHttpRequests(auth->{
             auth.requestMatchers("/api/v1/auth/**").permitAll();
-            auth.requestMatchers(HttpMethod.GET,"/api/v1/users/**").hasAnyAuthority("SCOPE_user:read");
-            auth.requestMatchers(HttpMethod.POST,"/api/v1/users/**").hasAnyAuthority("SCOPE_user:write");
-            auth.requestMatchers(HttpMethod.DELETE,"/api/v1/users/**").hasAnyAuthority("SCOPE_user:delete");
-            auth.requestMatchers(HttpMethod.PUT,"/api/v1/users/**").hasAnyAuthority("SCOPE_user:update");
+            auth.requestMatchers(HttpMethod.GET,"/api/v1/users/**").hasAuthority("SCOPE_user:read");
+            auth.requestMatchers(HttpMethod.POST,"/api/v1/users/**").hasAuthority("SCOPE_user:write");
+            auth.requestMatchers(HttpMethod.DELETE,"/api/v1/users/**").hasAuthority("SCOPE_user:delete");
+            auth.requestMatchers(HttpMethod.PUT,"/api/v1/users/**").hasAuthority("SCOPE_user:update");
             auth.anyRequest().authenticated();
         });
         // make security http stateless
         //http.httpBasic();
-
-        http.oauth2ResourceServer(oauth2 -> oauth2.jwt());
+        http.oauth2ResourceServer(oauth2 -> oauth2 .jwt(
+                jwt->jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())));
 
         // Make security http stateless
-        http.sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+        http.sessionManagement(
+                session ->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         // Exception
-       http.exceptionHandling()
-               .authenticationEntryPoint(customAuthenticationEntryPoint);
+       http.exceptionHandling(ex->
+               ex.authenticationEntryPoint(customAuthenticationEntryPoint));
         return http.build() ;
     }
+    /*
     @Bean
     public KeyPair keyPair() throws NoSuchAlgorithmException {
-        KeyPairGenerator keyPairGenerator  = KeyPairGenerator.getInstance("RSA");
-        keyPairGenerator.initialize(2048);
-        return keyPairGenerator.generateKeyPair();
+    KeyPairGenerator keyPairGenerator  = KeyPairGenerator.getInstance("RSA");
+    keyPairGenerator.initialize(2048);
+     return keyPairGenerator.generateKeyPair();
     }
-    @Bean
-    public JwtDecoder jwtDecoder(RSAKey rsaKey) throws JOSEException {
-        return NimbusJwtDecoder.withPublicKey(rsaKey.toRSAPublicKey()).build();
-    }
+     */
+
+    /*
     @Bean
     public RSAKey rsaKey (KeyPair keyPair){
         return new RSAKey.Builder((RSAPublicKey) keyPair.getPublic())
@@ -119,11 +139,45 @@ public class SecurityConfig {
                 .keyID(UUID.randomUUID().toString())
                 .build();
     }
+     */
     @Bean
-    public JwtEncoder jwtEncoder(JWKSource<SecurityContext>jwkSource){
-        return new NimbusJwtEncoder(jwkSource);
+    @Primary
+    public JwtDecoder jwtAccessTokenDecoder()  {
+        return NimbusJwtDecoder.withPublicKey(keyUtil.getAccessTokenPublicKey()).build();
     }
 
+    @Bean(name = "jwtRefreshTokeDecoder")
+    public JwtDecoder jwtRefreshTokeDecoder()  {
+        return NimbusJwtDecoder.withPublicKey(keyUtil.getRefreshTokenPublicKey()).build();
+    }
+
+    @Bean
+    @Primary
+    public JwtEncoder jwtAccessTokenEncoder(){
+        JWK jwk = new RSAKey.Builder(keyUtil.getAccessTokenPublicKey())
+                .privateKey(keyUtil.getAccessTokenPrivateKey())
+                .build();
+
+        JWKSet jwkSet = new JWKSet(jwk);
+
+        return new NimbusJwtEncoder((jwkSelector, context)
+                -> jwkSelector.select(jwkSet));
+    }
+
+    @Bean(name = "jwtRefreshTokenEncoder")
+    public JwtEncoder jwtRefreshTokenEncoder(){
+        JWK jwk = new RSAKey.Builder(keyUtil.getRefreshTokenPublicKey())
+                .privateKey(keyUtil.getRefreshTokenPrivateKey())
+                .build();
+
+        JWKSet jwkSet = new JWKSet(jwk);
+
+        return new NimbusJwtEncoder((jwkSelector, context)
+                -> jwkSelector.select(jwkSet));
+    }
+
+
+    /*
     @Bean
     public JWKSource<SecurityContext> jwkSource(RSAKey rsaKey){
         JWKSet jwkSet = new JWKSet(rsaKey);
@@ -134,4 +188,5 @@ public class SecurityConfig {
             }
         };
     }
+     */
 }

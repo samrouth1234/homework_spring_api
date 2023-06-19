@@ -4,6 +4,7 @@ import ios.istad.mbanking.BaseRest.BaseRest;
 import ios.istad.mbanking.auth.web.AuthDto;
 import ios.istad.mbanking.auth.web.LogInDto;
 import ios.istad.mbanking.auth.web.RegisterDto;
+import ios.istad.mbanking.auth.web.TokenDto;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +19,19 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 @Slf4j
 public class AuthRestController {
+
+    @PostMapping("/refresh")
+    public BaseRest<?> refreshToken (@RequestBody TokenDto tokenDto){
+        AuthDto authDto =authService.refreshToken(tokenDto);
+
+        return BaseRest.builder()
+                .status(true)
+                .code(HttpStatus.OK.value())
+                .message("You have been login successfully")
+                .timestamp(LocalDateTime.now())
+                .data(authDto)
+                .build();
+    }
     private final AuthService authService;
     @PostMapping("/register")
     public BaseRest<?> register(@Valid @RequestBody  RegisterDto registerDto){

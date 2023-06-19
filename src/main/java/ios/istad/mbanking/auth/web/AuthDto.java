@@ -1,4 +1,7 @@
 package ios.istad.mbanking.auth.web;
 
-public record AuthDto(String accessToken, String tokenType) {
+public record AuthDto(String accessToken,
+                      String tokenType,
+                      String refreshToken) {
+
 }

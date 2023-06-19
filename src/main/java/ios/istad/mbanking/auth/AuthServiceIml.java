@@ -5,10 +5,13 @@ import ios.istad.mbanking.api.user.UserMapStruct;
 import ios.istad.mbanking.auth.web.AuthDto;
 import ios.istad.mbanking.auth.web.LogInDto;
 import ios.istad.mbanking.auth.web.RegisterDto;
+import ios.istad.mbanking.auth.web.TokenDto;
 import ios.istad.mbanking.util.MailUtil;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -19,11 +22,15 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
+import org.springframework.security.oauth2.server.resource.authentication.BearerTokenAuthentication;
+import org.springframework.security.oauth2.server.resource.authentication.BearerTokenAuthenticationToken;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -35,21 +42,36 @@ public class AuthServiceIml implements AuthService{
     private final AuthMapper authMapper;
     private final UserMapStruct userMapStruct;
     private final PasswordEncoder encoder;
-
     // injection DaoAuthenticationProvider method security
-
     private final DaoAuthenticationProvider daoAuthenticationProvider;
+
+    private final JwtAuthenticationProvider jwtAuthenticationProvider;
 
     // injection  MailUtil
     private final MailUtil mailUtil;
     //
-    private final JwtEncoder jwtEncoder;
+    private final JwtEncoder jwtAccessTokenEncoder;
+    //
+    private  JwtEncoder jwtRefreshTokenEncoder;
+    @Autowired
+    public void setJwtRefreshTokenEncoder(@Qualifier("jwtRefreshTokenEncoder") JwtEncoder jwtRefreshTokenEncoder){
+        this.jwtRefreshTokenEncoder=jwtRefreshTokenEncoder;
+    }
 
     // injection mail in application-dev.properties
     @Value("${spring.mail.username}")
     private String fromAppMail;
 
     @Override
+    public AuthDto refreshToken(TokenDto tokenDto) {
+        Authentication authentication = new BearerTokenAuthenticationToken(tokenDto.refreshToken());
+        authentication= jwtAuthenticationProvider.authenticate(authentication);
+        System.out.println("Refresh :"+authentication.getName());
+        return null;
+    }
+
+    @Override
+    @Transactional
     public void register(RegisterDto registerDto) {
 
         User user = userMapStruct.registerDtoToUser(registerDto);
@@ -100,42 +122,48 @@ public class AuthServiceIml implements AuthService{
         User user  = authMapper.selectByEmailAndVerifiedCode(email,verifiedCode)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,"Email not found."));
         if (!user.getIsVerified()){
-            authMapper.updateIsVerifyStatus(email,verifiedCode);
+            authMapper.updateVerifiedCode(email,verifiedCode);
         }
     }
-
     @Override
     public AuthDto login(LogInDto logInDto) {
 //        call spring security to authenticate user
         Authentication authentication = new UsernamePasswordAuthenticationToken(logInDto.email(),logInDto.password());
         authentication=daoAuthenticationProvider.authenticate(authentication);
-//        log.info("User: {}", authentication);
-//        logic on basic authorization header;
-//        String basicAuthFormat = authentication.getName() + ":" + authentication.getCredentials();
-//        String encoding = Base64.getEncoder().encodeToString(basicAuthFormat.getBytes());
-//        Base64.getEncoder().encodeToString(basicAuthFormat.getBytes());
-//        log.info("basic {}", encoding);
         // create time now
         Instant now = Instant.now();
         // define scope
-        String scope =authentication
-                .getAuthorities()
-                .stream()
+        String scope =authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .filter(auth->!auth.startsWith("ROLE_"))
-                .collect(Collectors.joining(""));
+                .collect(Collectors.joining(" "));
 
-        JwtClaimsSet jwtClaimsSet = JwtClaimsSet.builder().
+        JwtClaimsSet jwtClaimsSet = JwtClaimsSet.builder()
+                .issuer("self")
+                .issuedAt(now)
+                .subject(authentication.getName())
+                .expiresAt(now.plus(1, ChronoUnit.SECONDS))
+                .claim("scope", scope)
+                .build();
+
+        JwtClaimsSet jwtRefreshClaimsSet = JwtClaimsSet.builder().
                 issuer("self")
                 .issuedAt(now)
                 .subject(authentication.getName())
-                .expiresAt(now.plusSeconds(3600))
+                .expiresAt(now.plus(1, ChronoUnit.HOURS))
                 .claim("scope", scope).
                 build();
-        String accessToken = jwtEncoder.encode(
+        // AccessToken
+        String accessToken = jwtAccessTokenEncoder.encode(
                 JwtEncoderParameters.from(jwtClaimsSet)
         ).getTokenValue();
+        //RefreshToken
+        String refreshToken =jwtRefreshTokenEncoder.encode(
+                JwtEncoderParameters.from(jwtRefreshClaimsSet)
+        ).getTokenValue();
 
-        return new AuthDto("Bearer",accessToken);
+        return new AuthDto("Bearer",
+                accessToken,
+                refreshToken);
     }
 }
